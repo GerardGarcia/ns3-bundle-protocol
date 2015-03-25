@@ -107,14 +107,17 @@ main (int argc, char *argv[])
 
 void SendBundle (Ptr<Socket> sock, Ipv4Address dstaddr, uint16_t port)
 {
-  // Build bundle payload header
-  BpPayloadHeader bpph;
-
   // Build primary bundle header
   BpHeader bph;
   bph.SetDestinationEid (BpEndpointId("dtn://", "destNode"));
   bph.SetSourceEid (BpEndpointId("dtn://", "srcNode"));
 
+  // Build bundle payload header
+  BpPayloadHeader bpph;
+  char test_payload[] = "TEST PAYLOAD!!";
+  std::vector<uint8_t> payload(std::begin(test_payload), std::end(test_payload));
+  bpph.SetPayload(payload);
+  bpph.SetLastBlock(true);
   // Create packet
   Ptr<Packet> packet = Create<Packet> ();
   packet->AddHeader (bpph);

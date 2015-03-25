@@ -25,31 +25,31 @@
 #include "ns3/log.h"
 #include "sdnv.h"
 
-NS_LOG_COMPONENT_DEFINE ("Sdnv");
+NS_LOG_COMPONENT_DEFINE ("SDNV");
 
 namespace ns3 {
 
-Sdnv::Sdnv ()
-{ 
+SDNV::SDNV ()
+{
   NS_LOG_FUNCTION (this);
 }
 
-Sdnv::~Sdnv ()
-{ 
+SDNV::~SDNV ()
+{
   NS_LOG_FUNCTION (this);
 }
 
-std::vector<uint8_t> 
-Sdnv::Encode (uint64_t val)
-{ 
+std::vector<uint8_t>
+SDNV::Encode (uint64_t val)
+{
   NS_LOG_FUNCTION (this << " " << val);
   std::vector<uint8_t> data;
 
   if (val == 0)
-    {
-      data.push_back (0);
-      return data;
-    }
+  {
+    data.push_back (0);
+    return data;
+  }
 
   uint8_t encoded;
 
@@ -58,36 +58,52 @@ Sdnv::Encode (uint64_t val)
   data.push_back (encoded);
   while (val)
   {
-	  encoded = val & 0x7F;
-      val >>= 7;
-      encoded |= 0x80;
-      data.push_back (encoded);
+    encoded = val & 0x7F;
+    val >>= 7;
+    encoded |= 0x80;
+    data.push_back (encoded);
   }
   std::reverse (data.begin (), data.end ());
   return data;
 }
 
-uint64_t 
-Sdnv::Decode (std::vector<uint8_t> val)
-{ 
+uint32_t
+SDNV::EncodingLength(uint64_t val)
+{
+  NS_LOG_FUNCTION (this << " " << val);
+
+  uint32_t val_len = 0;
+  uint64_t tmp = val;
+
+  do {
+    tmp = tmp >> 7;
+    val_len++;
+  } while (tmp != 0);
+
+  return val_len;
+}
+
+uint64_t
+SDNV::Decode (std::vector<uint8_t> val)
+{
   NS_LOG_FUNCTION (this);
   uint64_t decoded = 0;
   std::vector<uint8_t>::iterator iter;
-  for (iter=val.begin (); iter!=val.end (); iter++)
+  for (iter = val.begin (); iter != val.end (); iter++)
+  {
+    decoded <<= 7;
+    decoded += (*iter) & 0x7F;
+    if (((*iter) & 0x80) == 0)
     {
-      decoded <<= 7;
-      decoded += (*iter) & 0x7F;
-      if (((*iter) & 0x80) == 0)
-        {
-          return decoded;
-        }
+      return decoded;
     }
+  }
   return decoded;
 }
 
-uint64_t 
-Sdnv::Decode (Buffer::Iterator &start)
-{ 
+uint64_t
+SDNV::Decode (Buffer::Iterator &start)
+{
   NS_LOG_FUNCTION (this);
   std::vector<uint8_t> vec;
 
@@ -103,9 +119,24 @@ Sdnv::Decode (Buffer::Iterator &start)
   return Decode (vec);
 }
 
-bool 
-Sdnv::IsLast (uint8_t &val)
-{ 
+uint32_t 
+SDNV::Length(std::vector<uint8_t> val)
+{
+  uint32_t val_len = 1;
+  std::vector<uint8_t>::iterator iter;
+  for (iter = val.begin (); iter != val.end (); iter++) {
+    if (!(*iter) & 0x80){
+      break;
+    }
+    ++val_len;
+  }
+  
+  return val_len;
+}
+
+bool
+SDNV::IsLast (uint8_t &val)
+{
   NS_LOG_FUNCTION (this << " " << (uint16_t)val);
   if ((val & 0x80) == 0)
     return true;

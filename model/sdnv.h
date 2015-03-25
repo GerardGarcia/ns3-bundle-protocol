@@ -30,18 +30,18 @@ namespace ns3 {
 /**
  * \brief an implementation class of self-delimiting numeric values based on RFC 6256
  */
-class Sdnv
+class SDNV
 {
 public:
   /**
    * Constructor
    */
-  Sdnv ();
+  SDNV ();
 
   /**
    * Destroy
    */
-  virtual ~Sdnv ();
+  virtual ~SDNV ();
 
   /**
    * \brief SDNV encoding algorithm
@@ -52,6 +52,13 @@ public:
    * \return a uint8_t vector
    */
   std::vector<uint8_t> Encode (uint64_t val);
+
+  /**
+   * [EncodingLength description]
+   * @param  val [description]
+   * @return     [description]
+   */
+  uint32_t EncodingLength(uint64_t val);
 
   /**
    * \brief SDNV decoding algorithm for an integer
@@ -75,6 +82,13 @@ public:
    *         convert the return type to the type of variables in use
    */
   uint64_t Decode (Buffer::Iterator &start);
+
+  /**
+   * [Length description]
+   * @param  val [description]
+   * @return     [description]
+   */
+  uint32_t Length(std::vector<uint8_t> val);
 
   /**
    * \brief is this the bolder of an encoded integer?

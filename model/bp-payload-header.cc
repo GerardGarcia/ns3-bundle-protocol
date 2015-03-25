@@ -78,7 +78,7 @@ BpPayloadHeader::Serialize (Buffer::Iterator start) const
 { 
   NS_LOG_FUNCTION (this);
   Buffer::Iterator i = start;
-  Sdnv sdnv;
+  SDNV sdnv;
   std::vector<uint8_t> result; // store encoded results
 
   std::vector<uint8_t> processingControlFlags = sdnv.Encode (m_processingControlFlags);
@@ -97,7 +97,7 @@ BpPayloadHeader::Deserialize (Buffer::Iterator start)
 { 
   NS_LOG_FUNCTION (this);
   Buffer::Iterator i = start;
-  Sdnv sdnv;
+  SDNV sdnv;
 
   m_blockType = i.ReadU8 ();
   m_processingControlFlags = (uint8_t) sdnv.Decode (i);

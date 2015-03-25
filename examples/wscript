@@ -4,3 +4,5 @@ def build(bld):
     obj = bld.create_ns3_program('bundle-protocol-simple', ['bundle-protocol', 'point-to-point'])
     obj.source = 'bundle-protocol-simple.cc'
 
+    obj = bld.create_ns3_program('bundle-protocol-nocla', ['bundle-protocol', 'point-to-point'])
+    obj.source = 'bundle-protocol-nocla.cc'

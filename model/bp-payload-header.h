@@ -50,11 +50,15 @@ public:
     DISCARD_BLOCK              = 1 << 4,
     FORWARD_WITHOUT_PROCESS    = 1 << 5,
     EID_REFERENCE              = 1 << 6
-  }ProcessingControlFlags; 
+  } ProcessingControlFlags;
 
   // Setters
 
-  //Configure bundle processing control flags
+  /**
+   * [SetPayload  description]
+   * @param payload [description]
+   */
+  void SetPayload (std::vector<uint8_t> payload); 
 
   /**
    * \brief Block must or mustn't be replicated in every fragment
@@ -98,7 +102,10 @@ public:
 
   // Getters
 
-  //Get bundle processing control flags
+  /**
+   * [GetPayload  description]
+   */
+  std::vector<uint8_t> GetPayload();
 
   /**
    * \return Must block be replicated in every fragment?
@@ -148,13 +155,12 @@ public:
   virtual uint32_t Deserialize (Buffer::Iterator start);
 
 private:
-  uint16_t m_length;                 /// the length of header
-  uint8_t m_blockType;               /// block type
-  uint8_t m_processingControlFlags;  /// block processing control flags
-  uint32_t m_blockLength;            /// block length
+  uint16_t m_length;                  /// the length of the header
+  uint8_t m_blockType;                /// block type
+  uint8_t m_processingControlFlags;   /// block processing control flags
+  uint32_t m_payloadLength;           /// block length
+  std::vector<uint8_t> m_payload;     /// block body data
 };
-
-
 
 } // namespace ns3
 

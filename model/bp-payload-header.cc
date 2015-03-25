@@ -29,87 +29,120 @@ NS_LOG_COMPONENT_DEFINE ("BpPayloadHeader");
 namespace ns3 {
 
 BpPayloadHeader::BpPayloadHeader ()
-  : m_length (6),
+  : m_length (0),
     m_blockType (1),
     m_processingControlFlags (0),
-    m_blockLength (0)
-{ 
+    m_payloadLength (0)
+{
   NS_LOG_FUNCTION (this);
 }
 
 BpPayloadHeader::~BpPayloadHeader ()
-{ 
+{
   NS_LOG_FUNCTION (this);
 }
 
-TypeId 
+TypeId
 BpPayloadHeader::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::BpPayloadHeader")
-    .SetParent<Header> ()
-    .AddConstructor<BpPayloadHeader> ()
-  ;
+                      .SetParent<Header> ()
+                      .AddConstructor<BpPayloadHeader> ();
 
   return tid;
 }
 
-TypeId 
+TypeId
 BpPayloadHeader::GetInstanceTypeId (void) const
-{ 
+{
   NS_LOG_FUNCTION (this);
   return GetTypeId ();
 }
 
-uint32_t 
+uint32_t
 BpPayloadHeader::GetSerializedSize (void) const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  return m_length;
+  SDNV sdnv;
+
+  uint32_t size = 0;
+  size += sizeof(m_blockType);
+  size += sdnv.EncodingLength(m_processingControlFlags);
+  size += sdnv.EncodingLength(m_payloadLength);
+  size += m_payloadLength;
+
+  return size;
 }
 
-void 
+void
 BpPayloadHeader::Print (std::ostream &os) const
-{ 
+{
   NS_LOG_FUNCTION (this);
 }
 
-void 
+void
 BpPayloadHeader::Serialize (Buffer::Iterator start) const
-{ 
+{
   NS_LOG_FUNCTION (this);
   Buffer::Iterator i = start;
   SDNV sdnv;
   std::vector<uint8_t> result; // store encoded results
 
-  std::vector<uint8_t> processingControlFlags = sdnv.Encode (m_processingControlFlags);
-  std::vector<uint8_t> blockLength = sdnv.Encode (m_blockLength);
-  result.insert (result.end (), processingControlFlags.begin (), processingControlFlags.end ());
-  result.insert (result.end (), blockLength.begin (), blockLength.end ());
-
+  // Block Type
   i.WriteU8 (m_blockType);
 
-  for (uint32_t k = 0; k < result.size (); k++)
-    i.WriteU8 (result.at (k));  
+  // Block Processing Control Flags
+  std::vector<uint8_t> processingControlFlags = sdnv.Encode (m_processingControlFlags);
+  for (std::vector<uint8_t>::iterator it = processingControlFlags.begin();
+       it != processingControlFlags.end();
+       ++it) {
+    i.WriteU8(*it);
+  }
+
+  // Block length
+  std::vector<uint8_t> payloadLength = sdnv.Encode (m_payloadLength);
+  for (std::vector<uint8_t>::iterator it = payloadLength.begin();
+       it != payloadLength.end();
+       ++it) {
+    i.WriteU8(*it);
+  }
+
+  // Payload
+  for (std::vector<uint8_t>::const_iterator it = m_payload.begin();
+       it != m_payload.end();
+       ++it) {
+    i.WriteU8(*it);
+  }
 }
 
-uint32_t 
+uint32_t
 BpPayloadHeader::Deserialize (Buffer::Iterator start)
-{ 
+{
   NS_LOG_FUNCTION (this);
   Buffer::Iterator i = start;
   SDNV sdnv;
 
   m_blockType = i.ReadU8 ();
   m_processingControlFlags = (uint8_t) sdnv.Decode (i);
-  m_blockLength = (uint32_t) sdnv.Decode (i);
+  m_payloadLength = (uint32_t) sdnv.Decode (i);
+  for (uint32_t k = 0; k < m_payloadLength; k++) {
+    m_payload.push_back(i.ReadU8 ());
+  }
 
   return GetSerializedSize ();
 }
 
+void
+BpPayloadHeader::SetPayload (std::vector<uint8_t> payload)
+{
+  m_payload = payload;
+  SetBlockLength(m_payload.size());
+}
 
-void 
+
+void
 BpPayloadHeader::SetBlockReplicate (bool value)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= BLOCK_REPLICATE;
@@ -117,19 +150,19 @@ BpPayloadHeader::SetBlockReplicate (bool value)
     m_processingControlFlags &= (~(BLOCK_REPLICATE));
 }
 
-void 
+void
 BpPayloadHeader::SetTxStatusReport (bool value)
-{ 
-  NS_LOG_FUNCTION (this << " " << value); 
+{
+  NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= TX_STATUS_REPORT;
   else
     m_processingControlFlags &= (~(TX_STATUS_REPORT));
 }
 
-void 
+void
 BpPayloadHeader::SetDeleteBlock (bool value)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= DELETE_BLOCK;
@@ -137,9 +170,9 @@ BpPayloadHeader::SetDeleteBlock (bool value)
     m_processingControlFlags &= (~(DELETE_BLOCK));
 }
 
-void 
+void
 BpPayloadHeader::SetLastBlock (bool value)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= LAST_BLOCK;
@@ -147,9 +180,9 @@ BpPayloadHeader::SetLastBlock (bool value)
     m_processingControlFlags &= (~(LAST_BLOCK));
 }
 
-void 
+void
 BpPayloadHeader::SetDiscardBlock (bool value)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= DISCARD_BLOCK;
@@ -157,9 +190,9 @@ BpPayloadHeader::SetDiscardBlock (bool value)
     m_processingControlFlags &= (~(DISCARD_BLOCK));
 }
 
-void 
+void
 BpPayloadHeader::SetForwardWithoutProcess (bool value)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= FORWARD_WITHOUT_PROCESS;
@@ -167,9 +200,9 @@ BpPayloadHeader::SetForwardWithoutProcess (bool value)
     m_processingControlFlags &= (~(FORWARD_WITHOUT_PROCESS));
 }
 
-void 
+void
 BpPayloadHeader::SetEidReference (bool value)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << value);
   if (value)
     m_processingControlFlags |= EID_REFERENCE;
@@ -177,96 +210,73 @@ BpPayloadHeader::SetEidReference (bool value)
     m_processingControlFlags &= (~(EID_REFERENCE));
 }
 
-void 
+void
 BpPayloadHeader::SetBlockLength (uint32_t len)
-{ 
+{
   NS_LOG_FUNCTION (this << " " << len);
-  m_blockLength = len;
+  m_payloadLength = len;
 }
 
+std::vector<uint8_t>
+BpPayloadHeader::GetPayload()
+{
+  return m_payload;
+}
 
-bool 
+bool
 BpPayloadHeader::BlockReplicate () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & BLOCK_REPLICATE;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & BLOCK_REPLICATE;
 }
 
-bool 
+bool
 BpPayloadHeader::TxStatusReport () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & TX_STATUS_REPORT;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & TX_STATUS_REPORT;
 }
 
-bool 
+bool
 BpPayloadHeader::DeleteBlock () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & DELETE_BLOCK;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & DELETE_BLOCK;
 }
 
-bool 
+bool
 BpPayloadHeader::LastBlock () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & LAST_BLOCK;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & LAST_BLOCK;
 }
 
 bool
 BpPayloadHeader::DiscardBlock () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & DISCARD_BLOCK;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & DISCARD_BLOCK;
 }
 
 bool
 BpPayloadHeader::ForwardWithoutProcess () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & FORWARD_WITHOUT_PROCESS;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & FORWARD_WITHOUT_PROCESS;
 }
 
-bool 
+bool
 BpPayloadHeader::EidReference () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  uint32_t flag = m_processingControlFlags & EID_REFERENCE;
-  if (flag)
-    return true;
-  else 
-    return false;
+  return m_processingControlFlags & EID_REFERENCE;
 }
 
 uint32_t
 BpPayloadHeader::GetBlockLength () const
-{ 
+{
   NS_LOG_FUNCTION (this);
-  return m_blockLength;
+  return m_payloadLength;
 }
 
 

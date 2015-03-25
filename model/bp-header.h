@@ -16,12 +16,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Dizhi Zhou <dizhi.zhou@gmail.com>
+ * Author: Gerard Garcia <ggarcia@deic.uab.cat>
  */
 #ifndef BP_HEADER_H
 #define BP_HEADER_H
 
 #include <stdint.h>
 #include <string>
+#include <ctime>
 #include "ns3/header.h"
 #include "ns3/nstime.h"
 #include "ns3/buffer.h"
@@ -38,15 +40,11 @@ struct BpOffset
   BpOffset ()
     : offset (0),
       length (0)
-    {
-    }
+    {}
 
   uint16_t offset;  /// the string offset in dictionary field in BpHeader
   uint16_t length;  /// the string length 
 };
-
-typedef BpOffset BpOffset; /// typedef of struct BpOffset
-
 
 /**
  * \brief Bundle protocol header
@@ -58,12 +56,9 @@ class BpHeader : public Header
 {
 public:
   BpHeader ();
-  
   virtual ~BpHeader ();
 
   // Setters
-
-  // Configure bundle processing flags
   
   /**
    * \brief Bundle is/isn't a fragment
@@ -177,7 +172,7 @@ public:
    *
    * \param timestamp the creation timestamp time
    */
-  void SetCreateTimestamp (const Time &timestamp);
+  void SetCreateTimestamp (const std::time_t &timestamp);
 
   /**
    * \brief set the sequence number
@@ -209,9 +204,6 @@ public:
 
 
   // Getters
-
-  // Get bundle processing flags
-
   /**
    * \brief Is bundle a fragment?
    */
@@ -287,13 +279,12 @@ public:
   /**
    * \return the creation timestamp time
    */
-  Time GetCreateTimestamp () const;
+  std::time_t GetCreateTimestamp () const;
 
   /**
    * \return the creation timestamp sequence number  
    */
   SequenceNumber32 GetSequenceNumber () const;
-
 
   /**
    * \return the destination endpoint id
@@ -379,13 +370,15 @@ private:
   BpOffset m_reportSspOffset;             /// ssp offset of report endpoint id
   BpOffset m_custSchemeOffset;            /// scheme offset of custodian endpoint id
   BpOffset m_custSspOffset;               /// ssp offset of custodian endpoint id
-  Time m_createTimestamp;                 /// creation time
+  std::time_t m_createTimestamp;          /// creation time
   SequenceNumber32 m_timestampSeqNum;     /// sequence number
   double m_lifeTime;                      /// lifetime in seconds
   uint32_t m_dictLength;                  /// dictionary length
   std::string m_dictionary;               /// dictionary
   uint32_t m_fragOffset;                  /// fragementation offset
   uint32_t m_aduLength;                   /// application data unit length
+
+  uint32_t AddDictionaryEntry(const std::string &entry);
 };
 
 

@@ -32,6 +32,7 @@
 #include "bp-payload-header.h"
 #include <algorithm>
 #include <map>
+#include <ctime>
 
 NS_LOG_COMPONENT_DEFINE ("BundleProtocol");
 
@@ -230,7 +231,7 @@ BundleProtocol::Send (Ptr<Packet> p, const BpEndpointId &src, const BpEndpointId
       BpHeader bph;
       bph.SetDestinationEid (dst);
       bph.SetSourceEid (src);
-      bph.SetCreateTimestamp (Simulator::Now ());
+      bph.SetCreateTimestamp (std::time(NULL));
       bph.SetSequenceNumber (m_seq);
       m_seq++;
 
